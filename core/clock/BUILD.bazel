@@ -1,0 +1,7 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "clock",
+    srcs = ["Clock.java", "ManualClock.java"],
+    visibility = ["//core:__subpackages__"],
+)

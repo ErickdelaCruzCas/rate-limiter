@@ -1,0 +1,7 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+    name = "model",
+    srcs = ["Decision.java", "RateLimitResult.java", "RateLimiter.java"],
+    visibility = ["//core:__subpackages__"],
+)

@@ -1,0 +1,18 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+java_library(
+    name = "fixed_window",
+    srcs = ["FixedWindow.java"],
+    deps = ["//core/clock:clock", "//core/model:model"],
+    visibility = ["//core:__subpackages__"],
+)
+
+java_test(
+    name = "fixed_window_test",
+    srcs = ["FixedWindowTest.java"],
+    test_class = "rl.core.algorithms.fixed_window_counter.FixedWindowTest",
+    deps = [
+        ":fixed_window",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+    ],
+)
