@@ -10,9 +10,10 @@ java_library(
 java_test(
     name = "fixed_window_test",
     srcs = ["FixedWindowTest.java"],
-    test_class = "rate-limiter.core.algorithms.fixed_window_counter.FixedWindowTest",
+    test_class = "rl.core.algorithms.fixed_window.FixedWindowTest",
     deps = [
         ":fixed_window",
+        "//core/clock:clock",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
     ],
 )
