@@ -10,7 +10,7 @@ java_library(
 java_test(
     name = "sliding_window_log_test",
     srcs = ["SlidingWindowLogTest.java"],
-    test_class = "rl.core.algorithms.sliding_window.SlidingWindowLogTest",
+    test_class = "rate-limiter.core.algorithms.sliding_window.SlidingWindowLogTest",
     deps = [
         ":sliding_window_log",
         "@maven//:org_junit_jupiter_junit_jupiter_api_5_10_3",

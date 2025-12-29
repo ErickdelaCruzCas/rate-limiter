@@ -13,7 +13,7 @@ java_library(
 java_test(
     name = "token_bucket_test",
     srcs = ["TokenBucketTest.java"],
-    test_class = "rl.core.algorithms.token_bucket.TokenBucketTest",
+    test_class = "rate-limiter.core.algorithms.token_bucket.TokenBucketTest",
     deps = [
         ":token_bucket",
         "@maven//:org_junit_jupiter_junit_jupiter_api_5_10_3",
