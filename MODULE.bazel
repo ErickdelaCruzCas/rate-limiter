@@ -12,6 +12,10 @@ maven.install(
     artifacts = [
         "org.junit.jupiter:junit-jupiter-api:5.10.3",
         "org.junit.jupiter:junit-jupiter-engine:5.10.3",
+        "org.junit.platform:junit-platform-console:1.10.3",
+        "org.junit.platform:junit-platform-launcher:1.10.3",
+        "org.junit.platform:junit-platform-reporting:1.10.3",
+        "org.junit.platform:junit-platform-suite-api:1.10.3",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",

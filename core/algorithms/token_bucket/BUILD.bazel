@@ -13,10 +13,16 @@ java_library(
 java_test(
     name = "token_bucket_test",
     srcs = ["TokenBucketTest.java"],
-    test_class = "rate-limiter.core.algorithms.token_bucket.TokenBucketTest",
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.core.algorithms.token_bucket.TokenBucketTest"],
     deps = [
         ":token_bucket",
-        "@maven//:org_junit_jupiter_junit_jupiter_api_5_10_3",
-        "@maven//:org_junit_jupiter_junit_jupiter_engine_5_10_3",
+        "//core/clock:clock",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
     ],
 )

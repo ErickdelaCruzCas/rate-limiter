@@ -10,10 +10,16 @@ java_library(
 java_test(
     name = "fixed_window_test",
     srcs = ["FixedWindowTest.java"],
-    test_class = "rl.core.algorithms.fixed_window.FixedWindowTest",
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.core.algorithms.fixed_window.FixedWindowTest"],
     deps = [
         ":fixed_window",
         "//core/clock:clock",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
     ],
 )
