@@ -1,12 +1,71 @@
 # Rate Limiter Cookbook (Bazel-first)
 
-Este repositorio es un **cookbook técnico**, incremental y honesto, cuyo objetivo es aprender **Bazel** y **system design** usando un **rate limiter distribuido** como hilo conductor.
+Este repositorio es un **proyecto técnico incremental** diseñado como material de estudio para **entrevistas de system design** y **arquitectura de sistemas distribuidos**.
 
-No es un producto final.
-No es una librería lista para producción.
-No intenta impresionar con complejidad.
+Usa un **rate limiter distribuido** como caso de estudio para explorar:
+- Algoritmos de rate limiting y sus trade-offs
+- Concurrencia y sincronización en Java
+- Sistemas distribuidos y consistencia eventual
+- Build systems modernos con Bazel
+- Diseño de APIs con gRPC y protobuf
+- Performance engineering y benchmarking
 
-Intenta **enseñar cómo se piensan y se construyen sistemas**, y por qué Bazel cambia la forma de estructurar un proyecto serio.
+**Objetivo**: Crear un proyecto defendible en entrevistas técnicas que demuestre comprensión profunda de system design, concurrencia, y arquitectura de sistemas de alto throughput.
+
+El enfoque es **incremental y deliberado**: cada fase añade una dimensión de complejidad, permitiendo estudiar y articular decisiones de diseño con claridad.
+
+---
+
+## Valor para entrevistas técnicas
+
+Este proyecto está específicamente diseñado para:
+
+### System Design Interviews
+- Demuestra capacidad de descomponer un problema complejo en componentes
+- Articula trade-offs entre algoritmos (precisión vs memoria vs throughput)
+- Muestra evolución incremental de single-node a distribuido
+- Cubre temas recurrentes: sharding, consistencia, latencia, throughput
+
+### Coding Interviews (Java/Go)
+- Implementación correcta de estructuras de datos (ring buffers, deques)
+- Manejo de concurrencia con primitivas de bajo nivel (locks, atomics)
+- Testing exhaustivo con control temporal (ManualClock)
+- Performance engineering con benchmarks reproducibles
+
+### Conversaciones técnicas
+- Proyecto real con código ejecutable (no slides ni diagramas)
+- Decisiones documentadas con justificación explícita
+- Evidencia de pensamiento crítico sobre trade-offs
+- Demuestra rigor en testing y tooling profesional
+
+**Este no es un toy project**: es un estudio técnico profundo con implementaciones correctas, tests exhaustivos, y documentación de decisiones de diseño.
+
+---
+
+## Conceptos de System Design cubiertos
+
+| Concepto | Fase | Implementación |
+|----------|------|----------------|
+| **Algoritmos de rate limiting** | Fase 1 | Token Bucket, Fixed Window, Sliding Window (Log + Counter) |
+| **Abstracción del tiempo** | Fase 1 | Clock interface, ManualClock para tests deterministas |
+| **Testing determinista** | Fase 2 | JUnit 5, tests temporales sin flakiness |
+| **Concurrencia** | Fase 4 | Thread-safety, locks, atomics, CAS operations |
+| **In-memory state** | Fase 4 | ConcurrentHashMap, estructura de datos thread-safe |
+| **RPC y serialización** | Fase 5 | gRPC, Protobuf, codegen con Bazel |
+| **Polyglot systems** | Fase 6 | Java + Go con mismo contrato proto |
+| **Performance engineering** | Fases 3, 8 | JMH (Java), testing/benchmark (Go), load testing |
+| **Sistemas distribuidos** | Futuro | Partitioning, replicación, consistencia eventual |
+| **Observability** | Futuro | Métricas, tracing, debugging bajo carga |
+
+**Preguntas de entrevista típicas que este proyecto responde:**
+
+1. *"Design a rate limiter for an API gateway"* → Fases 1-5
+2. *"How would you handle 100K requests/second?"* → Fases 4, 7
+3. *"What are the trade-offs between different rate limiting algorithms?"* → Fase 1
+4. *"How do you test time-dependent code?"* → Fase 2 (ManualClock)
+5. *"How would you distribute rate limiting across multiple nodes?"* → Diseño en Fase 6+
+6. *"How do you ensure consistency in a distributed rate limiter?"* → CAP theorem, trade-offs documentados
+7. *"How would you benchmark and optimize this system?"* → Fase 7
 
 ---
 
@@ -80,19 +139,31 @@ Este repositorio está diseñado para **mostrar eso en la práctica**, no explic
 
 ---
 
-## Qué NO intenta resolver este proyecto
+## Scope y Roadmap
 
-Conviene dejarlo claro desde el principio:
+Este proyecto construye un rate limiter incremental, priorizando **claridad conceptual** sobre completitud de features.
 
-* No es un servicio completo listo para producción
-* No implementa alta disponibilidad real
-* No incluye sharding avanzado ni replicación
-* No integra Redis, DynamoDB ni otros KV distribuidos (al principio)
-* No resuelve autenticación, billing ni planes de suscripción
+### ✅ En scope (fases actuales):
+* Algoritmos fundamentales con análisis de complejidad
+* Concurrencia correcta con primitivas de bajo nivel
+* Testing determinista y reproducible
+* Build hermético con Bazel
+* Métricas y benchmarking sistemático
+* Diseño polyglot (Java + Go)
 
-Todo eso **vendría después**, si el objetivo fuera un producto.
+### 🔮 Fuera de scope (por ahora):
+* Alta disponibilidad con réplicas activas
+* Sharding automático y rebalanceo
+* Integración con KV stores distribuidos (Redis, DynamoDB)
+* Autenticación, autorización, billing
+* Dashboards y alerting en producción
 
-Aquí el objetivo es **entender las piezas**, no esconderlas.
+### 📋 Roadmap futuro (post-Fase 8):
+* **Fase 9 - Distributed coordination**: Consistencia con múltiples nodos
+* **Fase 10 - Persistent state**: Integración con Redis/etcd
+* **Fase 11 - Observability**: Métricas, tracing, profiling
+
+**Filosofía**: Cada fase debe ser **entendible, defendible, y ejecutable**. Nada de "magia" o complejidad innecesaria.
 
 ---
 
@@ -114,35 +185,67 @@ Si algo es complejo, tiene que estar justificado.
 
 ## Estructura del monorepo
 
-Visión de alto nivel:
+Estado actual:
 
 ```
 rate-limiter-cookbook/
-├── MODULE.bazel
-├── WORKSPACE
-├── README.md
-├── docs/
-│   └── design-notes.md
-├── proto/
-│   └── ratelimit.proto
-├── core/
-│   ├── clock/
-│   ├── model/
-│   └── algorithms/
-├── java/
-│   ├── engine/
-│   ├── grpc/
-│   ├── tests/
-│   └── benchmarks/
-├── go/
-│   ├── engine/
-│   ├── tests/
-│   └── benchmarks/
-├── load/
-│   └── traffic_generator.go
-└── infra/
-    └── docker/
+├── MODULE.bazel              ✅ (configurado con JUnit 5)
+├── .bazelrc                  ✅
+├── README.md                 ✅
+├── .gitignore                ✅
+├── docs/                     ✅
+│   └── design-notes.md       ✅
+├── proto/                    ⚠️
+│   ├── BUILD.bazel           ✅ (vacío)
+│   └── ratelimit.proto       ⚠️ (existe pero vacío)
+├── core/                     ✅ COMPLETO
+│   ├── BUILD.bazel           ✅
+│   ├── clock/                ✅
+│   │   ├── BUILD.bazel       ✅
+│   │   ├── Clock.java        ✅
+│   │   └── ManualClock.java  ✅
+│   ├── model/                ✅
+│   │   ├── BUILD.bazel       ✅
+│   │   ├── RateLimiter.java  ✅
+│   │   ├── Decision.java     ✅
+│   │   └── RateLimitResult.java ✅
+│   └── algorithms/           ✅
+│       ├── BUILD.bazel       ✅
+│       ├── token_bucket/     ✅
+│       │   ├── BUILD.bazel   ✅
+│       │   ├── TokenBucket.java     ✅
+│       │   └── TokenBucketTest.java ✅
+│       ├── fixed_window/     ✅
+│       │   ├── BUILD.bazel   ✅
+│       │   ├── FixedWindow.java     ✅
+│       │   └── FixedWindowTest.java ✅
+│       ├── sliding_window/   ✅
+│       │   ├── BUILD.bazel   ✅
+│       │   ├── SlidingWindowLog.java     ✅
+│       │   └── SlidingWindowLogTest.java ✅
+│       └── sliding_window_counter/ ✅
+│           ├── BUILD.bazel   ✅
+│           ├── SlidingWindowCounter.java     ✅
+│           └── SlidingWindowCounterTest.java ✅
+├── java/                     ⏳ PENDIENTE
+│   ├── engine/               ⏳
+│   ├── grpc/                 ⏳
+│   ├── tests/                ⏳
+│   └── benchmarks/           ⏳
+├── go/                       ⏳ PENDIENTE
+│   ├── engine/               ⏳
+│   ├── tests/                ⏳
+│   └── benchmarks/           ⏳
+├── load/                     ⏳ PENDIENTE
+│   └── traffic_generator.go  ⏳
+└── infra/                    ⏳ PENDIENTE
+    └── docker/               ⏳
 ```
+
+**Leyenda:**
+- ✅ Implementado y funcional
+- ⚠️ Existe pero incompleto
+- ⏳ Pendiente (no existe)
 
 Cada capa añade **una dimensión nueva de complejidad**, nunca varias a la vez.
 
@@ -152,7 +255,9 @@ Cada capa añade **una dimensión nueva de complejidad**, nunca varias a la vez.
 
 El proyecto se construye **por fases**, de forma deliberada:
 
-### Fase 0 — README y mentalidad
+### Fase 0 — README y mentalidad ✅
+
+**Estado: COMPLETADO**
 
 Antes de escribir código:
 
@@ -160,72 +265,272 @@ Antes de escribir código:
 * Definir qué NO resolvemos
 * Alinear expectativas
 
-### Fase 1 — Core puro (sin I/O)
+### Fase 1 — Core puro (sin I/O) ✅
 
-* Algoritmos deterministas
-* Sin red, sin threads, sin clocks reales
-* Reloj inyectable
-* Tests exhaustivos
+**Estado: COMPLETADO**
 
-Algoritmos:
+* ✅ Algoritmos deterministas
+* ✅ Sin red, sin threads, sin clocks reales
+* ✅ Reloj inyectable (Clock + ManualClock)
+* ✅ Tests exhaustivos
 
-* Token Bucket
-* Fixed Window
-* Sliding Window
-* Sliding Window Counter
+Algoritmos implementados:
 
-### Fase 2 — Tests como ciudadanos de primera
+* ✅ Token Bucket
+* ✅ Fixed Window
+* ✅ Sliding Window Log
+* ✅ Sliding Window Counter
 
-* Tests unitarios por algoritmo
-* Edge cases
-* Regresión temporal con reloj mockeado
+### Fase 2 — Tests como ciudadanos de primera ✅
 
-### Fase 3 — Java Engine
+**Estado: COMPLETADO**
 
-* Wrapper thread-safe
-* In-memory
-* Sin frameworks
-* Pensado para alto throughput
+* ✅ Tests unitarios por algoritmo (5 tests funcionales)
+* ✅ Edge cases cubiertos
+* ✅ Regresión temporal con reloj mockeado (ManualClock)
+* ✅ Configuración de JUnit 5 con Bazel
 
-### Fase 4 — gRPC API
+### Fase 3 — Performance Testing en Java ⏳
 
-* Contrato en proto
-* Codegen con Bazel
-* Server Java
+**Estado: PENDIENTE**
 
-### Fase 5 — Implementación en Go
+Tests de performance para validar los algoritmos core bajo condiciones de alto throughput **antes** de construir el engine completo:
 
-* Mismo contrato
-* Diferencias de diseño Java vs Go
-* Bazel como orquestador polyglot
+**Objetivos de testing:**
+* ⏳ Validar throughput de algoritmos (operaciones/segundo)
+* ⏳ Medir overhead de cada algoritmo (Token Bucket vs Sliding Window)
+* ⏳ Identificar hotspots con JProfiler o async-profiler
+* ⏳ Tests de stress: comportamiento bajo carga sostenida
 
-### Fase 6 — Benchmarks
+**Herramientas:**
+* ⏳ JMH (Java Microbenchmark Harness) para benchmarks precisos
+* ⏳ Warmup adecuado para JIT compilation
+* ⏳ Múltiples escenarios: hot keys, cold keys, distribución uniforme
+* ⏳ Comparación entre algoritmos con misma carga
 
-* JMH en Java
-* testing/benchmark en Go
-* Benchmarks como targets
+**Métricas objetivo:**
+* ⏳ Token Bucket: > 5M ops/sec (single-threaded)
+* ⏳ Fixed Window: > 10M ops/sec (single-threaded)
+* ⏳ Sliding Window Log: > 500K ops/sec (por overhead de ArrayDeque)
+* ⏳ Sliding Window Counter: > 2M ops/sec
 
-### Fase 7 — Load testing
+**Valor para entrevistas**: Demuestra capacidad de hacer performance engineering sistemático y razonar sobre trade-offs de algoritmos con datos reales.
 
-* Generador de tráfico propio
-* Reproducible
-* Sin herramientas externas
+### Fase 4 — Java Engine (Concurrencia y Alto Throughput) ⏳
+
+**Estado: PENDIENTE**
+
+Wrapper thread-safe para los algoritmos core, diseñado para alto throughput en contextos concurrentes:
+
+**Primitivas de concurrencia:**
+* ⏳ `ReentrantLock` vs `synchronized` - trade-offs de fairness y performance
+* ⏳ `AtomicLong` para contadores lock-free
+* ⏳ `ConcurrentHashMap` para almacenamiento por key
+* ⏳ `StampedLock` para optimistic reads (exploración)
+
+**Diseño del engine:**
+* ⏳ API simple: `boolean tryAcquire(String key, int permits)`
+* ⏳ In-memory state sin persistencia (por ahora)
+* ⏳ Eviction policy para limitar memoria (LRU simple)
+* ⏳ Sin frameworks externos (solo JDK)
+
+**Targets de performance:**
+* ⏳ > 100K requests/sec en un solo nodo (single-threaded)
+* ⏳ > 500K requests/sec con múltiples threads
+* ⏳ Latencia p99 < 1ms para hot keys
+
+**Testing de concurrencia:**
+* ⏳ Tests con `CountDownLatch` para race conditions
+* ⏳ Validación de thread-safety con múltiples threads
+* ⏳ Tests de stress con carga sostenida
+
+**Objetivo**: Demostrar dominio de primitivas de concurrencia de Java y capacidad de razonar sobre performance en sistemas multi-threaded.
+
+### Fase 5 — gRPC API ⏳
+
+**Estado: PENDIENTE**
+
+API gRPC para exponer el rate limiter como servicio, diseñada para alto throughput y baja latencia:
+
+**Contrato proto:**
+* ⏳ `CheckRateLimit(key, permits)` - unary call
+* ⏳ `CheckRateLimitBatch(requests[])` - batch para reducir RTT
+* ⏳ `ResetRateLimit(key)` - operación admin
+* ⏳ Health check endpoint
+
+**Implementación del servidor:**
+* ⏳ gRPC Java con servidor asíncrono (non-blocking)
+* ⏳ Thread pool tuning para alto throughput
+* ⏳ Error handling: InvalidArgument, ResourceExhausted, Unavailable
+* ⏳ Interceptors para logging y métricas
+* ⏳ Graceful shutdown
+
+**Manejo de errores y resiliencia:**
+* ⏳ Retry policy en cliente (exponential backoff)
+* ⏳ Circuit breaker para fallos cascada
+* ⏳ Deadline propagation
+* ⏳ Rate limiting del servidor mismo (protección contra DDoS)
+
+**Codegen con Bazel:**
+* ⏳ protoc + grpc-java plugin
+* ⏳ Targets separados: proto_library, java_proto_library, java_grpc_library
+* ⏳ Compartir .proto entre Java y Go
+
+**Valor para entrevistas**: Demuestra conocimiento de RPC, serialización, error handling, y diseño de APIs productizables.
+
+### Fase 6 — Load Testing Tool en Go ⏳
+
+**Estado: PENDIENTE**
+
+Herramienta en Go (estilo k6 minimalista) para validar rate limiters bajo carga real:
+
+**Funcionalidades:**
+* ⏳ Cliente gRPC en Go para llamar a la API (Fase 5)
+* ⏳ Cliente HTTP simple para APIs REST (futuro)
+* ⏳ Generador de tráfico configurable (RPS, duración, concurrencia)
+* ⏳ Distribución de keys: uniforme, zipf, hot keys
+
+**Métricas recolectadas:**
+* ⏳ Throughput (requests/sec achieved vs target)
+* ⏳ Latencia: p50, p95, p99, p99.9, max
+* ⏳ Tasa de rechazo (esperada vs real)
+* ⏳ Errores de red (timeouts, connection refused)
+* ⏳ Histograma de latencias en tiempo real
+
+**Output:**
+* ⏳ Reporte final en consola (tabla con métricas)
+* ⏳ JSON export para análisis posterior
+* ⏳ Gráficas ASCII simples (histograma de latencias)
+
+**Escenarios de testing:**
+* ⏳ Carga constante (sustained load)
+* ⏳ Spike test (ráfaga repentina)
+* ⏳ Ramp-up test (carga gradual)
+
+**Valor para entrevistas**: Herramienta real de load testing, demuestra capacidad de construir tooling propio y validar sistemas bajo carga.
+
+### Fase 7 — Implementación en Go ⏳
+
+**Estado: PENDIENTE**
+
+Implementación del rate limiter en Go, compartiendo el mismo contrato proto pero con diferencias de diseño específicas del lenguaje:
+
+**Algoritmos core en Go:**
+* ⏳ Token Bucket, Fixed Window, Sliding Window (misma lógica que Java)
+* ⏳ Clock abstraction en Go (interface Clock, MockClock para tests)
+* ⏳ Testing con `testing` package de Go
+
+**Primitivas de concurrencia en Go:**
+* ⏳ Goroutines vs threads de Java
+* ⏳ Channels vs locks para comunicación
+* ⏳ `sync.Mutex` vs `sync.RWMutex` vs `atomic`
+* ⏳ `sync.Map` vs `map[string]RateLimiter` + mutex
+
+**Engine thread-safe:**
+* ⏳ In-memory storage con sync.Map o mutex + map
+* ⏳ Goroutine pool para handling de requests
+* ⏳ Context propagation para cancellation
+
+**gRPC server en Go:**
+* ⏳ Mismo .proto que Java
+* ⏳ grpc-go implementation
+* ⏳ Comparación de performance Go vs Java
+
+**Trade-offs Go vs Java:**
+* ⏳ GC: stop-the-world (Java) vs concurrent (Go)
+* ⏳ Goroutines livianas vs threads pesados
+* ⏳ Simplicidad de deployment (binary estático Go vs JVM)
+* ⏳ Performance: latencia, throughput
+
+**Valor para entrevistas**: Demuestra comprensión profunda de concurrencia en dos lenguajes, capacidad de comparar trade-offs de diseño.
+
+### Fase 8 — Benchmarks y Comparación ⏳
+
+**Estado: PENDIENTE**
+
+Benchmarking sistemático de todas las implementaciones para validar decisiones de diseño:
+
+**Benchmarks de algoritmos:**
+* ⏳ JMH en Java (ya hecho en Fase 3, aquí se extiende)
+* ⏳ `testing/benchmark` en Go
+* ⏳ Comparación directa: mismo escenario, ambos lenguajes
+
+**Benchmarks de engines:**
+* ⏳ Throughput bajo diferentes cargas (1K, 10K, 100K, 1M RPS)
+* ⏳ Latencia con diferentes niveles de concurrencia
+* ⏳ Memory footprint (heap usage, GC pressure)
+* ⏳ CPU utilization
+
+**Benchmarks end-to-end (gRPC):**
+* ⏳ Latencia con serialización proto
+* ⏳ Overhead de red vs in-process
+* ⏳ Comparación Java gRPC server vs Go gRPC server
+
+**Visualización de resultados:**
+* ⏳ Gráficas de latencia (percentiles)
+* ⏳ Throughput vs latencia trade-off
+* ⏳ Comparación side-by-side Java vs Go
+
+**Valor para entrevistas**: Demuestra rigor en performance engineering, capacidad de tomar decisiones basadas en datos, no suposiciones.
+
+---
+
+## Estado del Proyecto (Actualizado)
+
+### ✅ Completado (Fases 1-2)
+
+El proyecto ha completado exitosamente las bases fundamentales:
+
+**Core Algorithms** (`/core/algorithms/`)
+- **Token Bucket**: Implementación completa con refill dinámico continuo
+- **Fixed Window**: Implementación con alineación de ventanas temporales
+- **Sliding Window Log**: Precisión exacta usando ArrayDeque para timestamps
+- **Sliding Window Counter**: Balance memoria/precisión con ring buffer de buckets
+
+**Infrastructure**
+- Clock abstraction para tests deterministas (Clock + ManualClock)
+- Model layer limpio (Decision, RateLimitResult, RateLimiter)
+- 5 tests unitarios funcionales con JUnit 5 + JUnit Platform
+- Bazel configurado correctamente con rules_java
+
+**Comandos Funcionales:**
+```bash
+bazel test //core/algorithms/...  # ✅ 4/4 tests passing
+```
+
+### ⏳ Siguiente Fase Recomendada: Performance Testing en Java (Fase 3)
+
+Para continuar el proyecto, el siguiente paso lógico es implementar:
+- Benchmarks con JMH para validar throughput de algoritmos core
+- Tests de stress para identificar hotspots
+- Comparación entre algoritmos (Token Bucket vs Sliding Window)
+- Métricas objetivo: > 5M ops/sec para Token Bucket
+
+**Justificación**: Validar performance de algoritmos **antes** de construir el engine permite tomar decisiones informadas sobre qué algoritmo usar por defecto y detectar problemas de diseño temprano.
 
 ---
 
 ## Cómo usar este repositorio
 
-Ejecutar tests del core:
+**Ejecutar todos los tests del core (Fases 1-2 completadas):**
 
 ```bash
-bazel test //core/...
+bazel test //core/algorithms/...
 ```
 
-Ejecutar benchmarks (fases posteriores):
+**Ejecutar tests individuales:**
 
 ```bash
-bazel run //java/benchmarks:token_bucket
-bazel test //go/benchmarks:sliding_window
+bazel test //core/algorithms/token_bucket:token_bucket_test
+bazel test //core/algorithms/fixed_window:fixed_window_test
+bazel test //core/algorithms/sliding_window:sliding_window_log_test
+bazel test //core/algorithms/sliding_window_counter:sliding_window_counter_test
+```
+
+**Ver resultados detallados:**
+
+```bash
+bazel test //core/algorithms/... --test_output=all
 ```
 
 Bazel se encarga de ejecutar **solo lo que cambia**.
@@ -234,12 +539,136 @@ Bazel se encarga de ejecutar **solo lo que cambia**.
 
 ## Lessons learned (vivo)
 
-Esta sección se irá rellenando con conclusiones reales:
+**De las Fases 1-2 completadas:**
 
-* Bazel premia targets pequeños y bien definidos
-* Sliding window es más preciso, pero más caro
+* ✅ **Bazel premia targets pequeños y bien definidos**
+  - Cada algoritmo es un target independiente con su propio BUILD.bazel
+  - Tests aislados sin dependencias cruzadas
+  - Cacheo granular permite builds incrementales rápidos
+
+* ✅ **JUnit 5 requiere configuración explícita en Bazel**
+  - Necesita JUnit Platform Console Launcher como `main_class`
+  - No puede usar el runner JUnit 4 por defecto de Bazel
+  - Requiere `use_testrunner = False` y dependencias de junit-platform
+
+* ✅ **ManualClock hace los tests deterministas y rápidos**
+  - No hay sleeps ni timeouts en tests
+  - Control total sobre el tiempo con `advanceNanos()` y `setNanos()`
+  - Resultados reproducibles 100% sin flakiness
+
+* ✅ **Sliding Window Log es más preciso, pero más caro**
+  - Precisión exacta: O(permits) por request vs O(1) en Fixed Window
+  - Memoria: O(limit) vs O(1) en Fixed Window
+  - Trade-off documentado explícitamente en código
+
+* ✅ **Trade-offs son explícitos en el código**
+  - Comentarios documentan pros/contras de cada algoritmo
+  - Decisiones arquitectónicas visibles (ej: "precisión vs coste")
+  - No hay complejidad oculta ni "magia"
+
+**Pendiente de validar en fases futuras:**
+
 * En distribuido, la perfección suele ser innecesaria
 * La mayoría de sistemas necesitan aproximaciones razonables, no exactitud matemática
+* Latencia vs consistencia en entornos multi-nodo
+
+---
+
+## Arquitectura y decisiones de diseño
+
+### Separación de concerns
+
+```
+┌─────────────────────────────────────────────┐
+│  Load Testing Tool (Go)                     │
+│  - Generador de tráfico concurrente         │
+│  - Métricas: throughput, latencia, rechazos │
+└──────────────────┬──────────────────────────┘
+                   │
+                   v
+┌─────────────────────────────────────────────┐
+│  gRPC API (Java)                            │
+│  - Endpoint: CheckRateLimit(key, permits)   │
+│  - Protobuf codegen con Bazel               │
+└──────────────────┬──────────────────────────┘
+                   │
+                   v
+┌─────────────────────────────────────────────┐
+│  Java Engine (Thread-safe wrapper)          │
+│  - ConcurrentHashMap<String, RateLimiter>   │
+│  - Locks/Atomics para sincronización        │
+│  - Eviction policy (LRU)                    │
+└──────────────────┬──────────────────────────┘
+                   │
+                   v
+┌─────────────────────────────────────────────┐
+│  Core Algorithms (Puro, sin I/O)            │
+│  - TokenBucket, FixedWindow, SlidingWindow  │
+│  - Clock abstraction inyectable             │
+│  - Determinista, testable                   │
+└─────────────────────────────────────────────┘
+```
+
+### Trade-offs principales documentados
+
+| Decisión | Opción elegida | Trade-off | Justificación |
+|----------|----------------|-----------|---------------|
+| **Algoritmo por defecto** | Token Bucket | Precisión vs simplicidad | Balance ideal: refill continuo, memoria O(1), implementación simple |
+| **Almacenamiento** | In-memory (ConcurrentHashMap) | Velocidad vs persistencia | Latencia sub-ms para hot paths, suficiente para Fase 4 |
+| **Sincronización** | ReentrantLock por key | Granularidad vs overhead | Lock por key evita contention global, permite paralelismo |
+| **Testing temporal** | ManualClock injection | Determinismo vs realismo | Tests reproducibles > tests realistas, no flakiness |
+| **Build system** | Bazel | Learning curve vs hermetic builds | Inversión inicial vale para reproducibilidad y polyglot |
+| **RPC** | gRPC + Protobuf | Complejidad vs performance | Serialización eficiente, codegen, soporte multi-lenguaje |
+
+### Por qué no usar librerías externas (Guava, Resilience4j)
+
+En un proyecto de producción, usaría `Guava RateLimiter` o `Resilience4j`.
+
+Aquí la implementación manual es **deliberada** porque:
+1. **Entrevistas valoran implementación desde cero** - demuestra comprensión profunda
+2. **Control total sobre trade-offs** - puedo explicar cada decisión
+3. **Material de estudio** - entender el "cómo" y el "por qué"
+4. **Bazel como protagonista** - estructurar targets desde cero
+
+### Próximas decisiones de diseño (Fases futuras)
+
+**Fase 5 (gRPC)**:
+- ¿Streaming bidireccional o unary calls?
+- ¿Cómo manejar backpressure?
+- ¿Qué hacer si el servidor está sobrecargado?
+
+**Fase 6 (Go implementation)**:
+- Goroutines + channels vs mutexes
+- sync.Map vs mutex + map[string]
+- Diferencias con implementación Java
+
+**Fase 8 (Distributed)**:
+- Consistencia fuerte vs eventual
+- Leader election (Raft, Paxos)
+- Partitioning strategy (consistent hashing)
+
+---
+
+## Cómo usar este proyecto en entrevistas
+
+### Para System Design rounds:
+1. Explica la evolución incremental (single-node → distributed)
+2. Articula trade-offs entre algoritmos con análisis de complejidad
+3. Discute decisiones de concurrencia (locks, atomics, CAS)
+4. Muestra tests deterministas con ManualClock
+5. Habla sobre cómo escalarías a millones de requests/sec
+
+### Para Coding rounds:
+1. Muestra implementación limpia de Token Bucket o Sliding Window
+2. Explica el patrón de Clock injection para testing
+3. Demuestra comprensión de estructuras de datos (ArrayDeque, ring buffer)
+4. Habla sobre complejidad temporal y espacial
+
+### Para conversaciones de arquitectura:
+1. Referencia el código real en GitHub
+2. Muestra Bazel targets y estructura del monorepo
+3. Explica decisiones de tooling (Bazel vs Maven)
+4. Discute roadmap futuro (distributed, persistence)
 
 ---
 
