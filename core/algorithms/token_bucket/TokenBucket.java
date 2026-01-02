@@ -11,6 +11,8 @@ import rl.core.model.RateLimiter;
  *
  * Pros: buen burst + tasa media estable.
  * Contras: estado por key en distribuido; sincronización si hay múltiples nodos.
+ *
+ * Thread-safety: synchronized para soportar acceso concurrente.
  */
 public final class TokenBucket implements RateLimiter {
     private final Clock clock;
@@ -31,7 +33,7 @@ public final class TokenBucket implements RateLimiter {
     }
 
     @Override
-    public RateLimitResult tryAcquire(String key, int permits) {
+    public synchronized RateLimitResult tryAcquire(String key, int permits) {
         if (permits <= 0) throw new IllegalArgumentException("permits <= 0");
         refill();
 

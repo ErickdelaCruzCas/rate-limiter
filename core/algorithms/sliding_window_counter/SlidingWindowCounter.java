@@ -11,6 +11,8 @@ import rl.core.model.RateLimiter;
  *
  * Pros: estado acotado, buen rendimiento.
  * Contras: aproximación; elegir granularidad es una decisión (precisión vs coste).
+ *
+ * Thread-safety: synchronized for concurrent access.
  */
 public final class SlidingWindowCounter implements RateLimiter {
     private final Clock clock;
@@ -42,7 +44,7 @@ public final class SlidingWindowCounter implements RateLimiter {
     }
 
     @Override
-    public RateLimitResult tryAcquire(String key, int permits) {
+    public synchronized RateLimitResult tryAcquire(String key, int permits) {
         if (permits <= 0) throw new IllegalArgumentException("permits <= 0");
         long now = clock.nowNanos();
         roll(now);

@@ -4,6 +4,13 @@ import rl.core.clock.Clock;
 import rl.core.model.RateLimitResult;
 import rl.core.model.RateLimiter;
 
+/**
+ * Fixed Window Rate Limiter:
+ * - Simple counter that resets every window
+ * - Boundary problem: can allow 2x rate at window edges
+ *
+ * Thread-safety: synchronized for concurrent access.
+ */
 public final class FixedWindow implements RateLimiter {
     private final Clock clock;
     private final long windowNanos;
@@ -25,7 +32,7 @@ public final class FixedWindow implements RateLimiter {
     }
 
     @Override
-    public RateLimitResult tryAcquire(String key, int permits) {
+    public synchronized RateLimitResult tryAcquire(String key, int permits) {
         if (permits <= 0) throw new IllegalArgumentException("permits <= 0");
 
         long now = clock.nowNanos();

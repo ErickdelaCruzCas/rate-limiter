@@ -19,6 +19,7 @@ java_test(
     deps = [
         ":token_bucket",
         "//core/clock:clock",
+        "//core/model:model",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_engine",
         "@maven//:org_junit_platform_junit_platform_launcher",

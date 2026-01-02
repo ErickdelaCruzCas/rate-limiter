@@ -13,6 +13,8 @@ import java.util.ArrayDeque;
  * Pros: precisión real.
  * Contras: memoria/GC y coste por request.
  * En distribuido: estado grande por key.
+ *
+ * Thread-safety: synchronized for concurrent access.
  */
 public final class SlidingWindowLog implements RateLimiter {
     private final Clock clock;
@@ -30,7 +32,7 @@ public final class SlidingWindowLog implements RateLimiter {
     }
 
     @Override
-    public RateLimitResult tryAcquire(String key, int permits) {
+    public synchronized RateLimitResult tryAcquire(String key, int permits) {
         if (permits <= 0) throw new IllegalArgumentException("permits <= 0");
         long now = clock.nowNanos();
         prune(now);
