@@ -620,6 +620,215 @@ Bazel se encarga de ejecutar **solo lo que cambia**.
 | **Build system** | Bazel | Learning curve vs hermetic builds | Inversión inicial vale para reproducibilidad y polyglot |
 | **RPC** | gRPC + Protobuf | Complejidad vs performance | Serialización eficiente, codegen, soporte multi-lenguaje |
 
+### Algoritmos de Rate Limiting: Análisis Profundo
+
+#### Token Bucket - Refill Continuo
+
+**Concepto:** Bucket con tokens que se regeneran continuamente. Permite bursts controlados.
+
+**Funcionamiento:**
+```
+Configuración: capacity=10, rate=5 tokens/sec
+
+t=0.0s  [##########] 10 tokens → request(7) → ALLOW
+t=0.0s  [###       ]  3 tokens → request(5) → REJECT
+t=0.4s  [#####     ]  5 tokens (3 + 2 refill) → request(5) → ALLOW
+t=1.4s  [#####     ]  5 tokens (0 + 5 refill)
+```
+
+**Refill automático:** `tokens = min(capacity, tokens + elapsed_time × rate)`
+
+**Trade-offs:**
+- ✅ Permite bursts naturales (hasta capacity)
+- ✅ Refill continuo (no abrupto)
+- ✅ O(1) tiempo y memoria
+- ❌ Requiere sincronización en distribuido
+- ❌ Necesita timestamps precisos
+
+**Cuándo usar:** Sistemas que necesitan manejar tráfico con picos naturales (APIs REST, colas de mensajes).
+
+---
+
+#### Fixed Window - El Boundary Problem
+
+**Concepto:** Contador simple que se resetea cada X tiempo en ventanas alineadas.
+
+**Funcionamiento:**
+```
+Configuración: window=1s, limit=10
+
+Ventana 1 [0.0s - 1.0s]          Ventana 2 [1.0s - 2.0s]
+┌───────────────────────┐       ┌───────────────────────┐
+│ t=0.3s: +5 → used=5   │       │ t=1.0s: RESET → used=0│
+│ t=0.8s: +5 → used=10  │       │ t=1.5s: +10 → used=10 │
+│ t=0.9s: +1 → REJECT ❌│       │                       │
+└───────────────────────┘       └───────────────────────┘
+```
+
+**⚠️ BOUNDARY PROBLEM - Puede Permitir 2x el Límite:**
+
+```
+    Ventana 1 [0.0s - 1.0s]          Ventana 2 [1.0s - 2.0s]
+    ┌───────────────────────┐       ┌───────────────────────┐
+    │         [FINAL]       │       │ [INICIO]              │
+0.0s│                  0.9s │  1.0s │ 1.1s                 │2.0s
+    │                   ████│███████│████                  │
+    │                  10req│ RESET │10req                 │
+    └───────────────────────┘       └───────────────────────┘
+                         └─────┬─────┘
+                      ¡20 requests en 200ms! 💥
+```
+
+**Por qué ocurre:**
+- Ventanas están **alineadas** al calendario (0s, 1s, 2s...)
+- Reset **abrupto** en el boundary
+- No considera distribución temporal de requests
+- Un atacante puede explotar esto: enviar 10 requests al final de cada ventana + 10 al inicio de la siguiente
+
+**Ejemplo real del test:**
+```java
+// t=0.9s: 10 requests al final de ventana 1
+window.tryAcquire("user1", 10) → ALLOW ✅
+
+// t=1.0s: RESET (nueva ventana)
+
+// t=1.1s: 10 requests al inicio de ventana 2
+window.tryAcquire("user1", 10) → ALLOW ✅
+
+// Total: 20 requests en 200ms (límite es "10 por segundo")
+```
+
+**Trade-offs:**
+- ✅ Extremadamente simple (un contador)
+- ✅ O(1) tiempo y memoria
+- ✅ Fácil de implementar y debuggear
+- ❌ **Boundary problem: puede permitir 2x el rate**
+- ❌ Reset abrupto (no gradual)
+- ❌ No adecuado para protección DDoS
+
+**Cuándo usar:**
+- APIs internas donde bursts son aceptables
+- Límites muy conservadores (límite=100, esperas ~50)
+- Sistemas educativos / demos
+- **NO usar:** APIs públicas, protección contra abuso, SLAs estrictos
+
+---
+
+#### Sliding Window Log - Precisión Exacta
+
+**Concepto:** Guarda timestamp de cada request en una cola. Eviction gradual.
+
+**Funcionamiento:**
+```
+Configuración: window=1s, limit=5
+
+t=0.0s: requests=[0]         → ALLOW (1/5)
+t=0.2s: requests=[0, 200ms]  → ALLOW (2/5)
+t=0.5s: requests=[0, 200ms, 500ms, 500ms, 500ms] → 5/5
+t=0.6s: requests=[0, 200ms, 500ms, 500ms, 500ms] → REJECT ❌
+t=1.1s: prune < 100ms → requests=[200ms, 500ms, 500ms, 500ms]
+t=1.1s: requests=[200ms, 500ms, 500ms, 500ms, 1100ms] → ALLOW (5/5)
+```
+
+**NO sufre boundary problem:**
+```
+t=0.9s:  10 requests → ALLOW ✅
+t=1.1s:  window = [0.1s-1.1s] contiene 10 requests
+         → REJECT ❌ (ventana deslizante, no reset)
+```
+
+**Trade-offs:**
+- ✅ **Precisión exacta** en cualquier momento
+- ✅ No boundary problem
+- ✅ Eviction gradual (no abrupta)
+- ❌ O(limit) memoria (guarda todos los timestamps)
+- ❌ O(permits) tiempo por request (inserción + eviction)
+- ❌ Presión en GC (ArrayDeque con objetos Long)
+- ❌ Estado grande en distribuido
+
+**Cuándo usar:**
+- Cuando precisión exacta es crítica
+- APIs públicas con SLAs estrictos
+- Sistemas anti-fraude
+- Memoria no es limitante
+- **NO usar:** High throughput (>1M RPS), memoria limitada
+
+---
+
+#### Sliding Window Counter - Aproximación Práctica
+
+**Concepto:** Ring buffer de buckets. Balance entre Fixed Window y Sliding Window Log.
+
+**Funcionamiento:**
+```
+Configuración: window=1s, buckets=10 (100ms cada uno), limit=20
+
+Ring buffer:
+[bucket0][bucket1][bucket2]...[bucket9]
+   3       5        4           2
+
+t=0.3s (bucket 3): +5 → total=19
+t=0.6s (bucket 6): +2 → REJECT (19+2 > 20)
+t=1.1s: bucket 1 sale, bucket 11 entra (wrap)
+```
+
+**Ring buffer wrapping:**
+```
+t=0.0s-0.9s: buckets 0-9 contienen 20 requests
+t=1.0s: bucket 0 sale (libera su count)
+t=1.0s: bucket 10 entra (mismo índice que bucket 0)
+```
+
+**Trade-offs:**
+- ✅ Mejor que Fixed Window (granularidad)
+- ✅ Más barato que Sliding Window Log
+- ✅ O(buckets) memoria (fijo)
+- ✅ O(1) tiempo amortizado
+- ⚠️ **Aproximación** (precisión depende de # buckets)
+- ⚠️ Todavía tiene boundary problem (menor)
+- ❌ Configuración adicional (elegir # buckets)
+
+**Precision vs buckets:**
+- 1 bucket = Fixed Window (boundary problem completo)
+- 10 buckets = boundary problem ~10% (vs 100% de Fixed Window)
+- 100 buckets = casi exacto, pero overhead mayor
+
+**Cuándo usar:**
+- Balance memoria/precisión necesario
+- High throughput donde Sliding Window Log es caro
+- Puedes tolerar ~5-10% imprecisión
+- Producción real (usado por Redis, Nginx)
+
+---
+
+### Comparación Directa
+
+| Algoritmo | Memoria | Precisión | Tiempo | Boundary Problem |
+|-----------|---------|-----------|--------|------------------|
+| **Token Bucket** | O(1) | Buena | O(1) | No aplica (refill continuo) |
+| **Fixed Window** | O(1) | Mala | O(1) | ⚠️ **SÍ (hasta 2x rate)** |
+| **Sliding Window Log** | O(limit) | Exacta | O(permits) | ✅ **NO** |
+| **Sliding Window Counter** | O(buckets) | Aproximada | O(1) | ⚠️ Sí (mitigado) |
+
+### Recomendación por Escenario
+
+**APIs Internas (bajo riesgo):**
+- Fixed Window (simple) o Token Bucket (bursts)
+
+**APIs Públicas (protección contra abuso):**
+- Sliding Window Log (precisión) o Sliding Window Counter (performance)
+
+**High Performance (>1M RPS):**
+- Token Bucket o Sliding Window Counter con pocos buckets
+
+**Protección DDoS:**
+- Sliding Window Log (no boundary problem)
+
+**Educational / Demo:**
+- Fixed Window (entender el problema) → Sliding Window Log (solución)
+
+---
+
 ### Por qué no usar librerías externas (Guava, Resilience4j)
 
 En un proyecto de producción, usaría `Guava RateLimiter` o `Resilience4j`.
