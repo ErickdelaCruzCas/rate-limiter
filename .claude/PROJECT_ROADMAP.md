@@ -12,7 +12,7 @@
 | Fase 0 | ✅ COMPLETADA | 100% | - |
 | Fase 1 | ✅ COMPLETADA | 100% | - |
 | Fase 2 | ✅ COMPLETADA | 100% | 2026-01-02 |
-| Fase 3 | ⏳ PENDIENTE | 0% | - |
+| Fase 3 | ⏭️ SKIPPED | N/A | Benchmarks en Fase 8 |
 | Fase 4 | ⏳ PENDIENTE | 0% | - |
 | Fase 5 | ⏳ PENDIENTE | 0% | - |
 | Fase 6 | ⏳ PENDIENTE | 0% | - |
@@ -175,50 +175,28 @@ bazel test //core/algorithms/...
 
 ---
 
-## ⏳ FASE 3 - Performance Testing en Java (PENDIENTE)
+## ⏭️ FASE 3 - Performance Testing en Java (SKIPPED)
 
-### Objetivos
-Tests de performance para validar algoritmos core bajo alto throughput **antes** de construir el engine.
+### Estado: SKIPPED ⏭️
 
-### Tareas Pendientes
+**Razón del skip:**
+- El objetivo principal del proyecto es profundizar en **Go**, no Java
+- Los benchmarks serán más valiosos en **Fase 8** cuando se pueda comparar Java vs Go end-to-end
+- Implementar el engine primero (Fase 4) permite testear performance en contexto realista
+- JMH añadiría complejidad innecesaria si el foco es ir a Go rápido
 
-#### Setup JMH
-- [ ] Agregar dependencia JMH al MODULE.bazel
-- [ ] Crear módulo `java/benchmarks/`
-- [ ] Configurar BUILD.bazel para benchmarks
+### ¿Qué se hará en su lugar?
 
-#### Benchmarks por Algoritmo
-- [ ] **TokenBucket Benchmark**
-  - Target: > 5M ops/sec (single-threaded)
-  - Escenarios: hot path, refill continuo, burst
+**Performance testing se mueve a Fase 8** con enfoque en:
+- **Benchmarks en Go** (`testing/benchmark`) - principal foco
+- Benchmarks básicos de Java para comparación (no JMH completo)
+- Comparación directa Java vs Go con mismo escenario
+- Load testing end-to-end con herramienta propia (Fase 6)
+- Métricas más realistas en contexto de engine completo y gRPC
 
-- [ ] **FixedWindow Benchmark**
-  - Target: > 10M ops/sec (single-threaded)
-  - Escenarios: mismo bucket, transición de bucket
+### Decisión tomada: 2026-01-02
 
-- [ ] **SlidingWindowLog Benchmark**
-  - Target: > 500K ops/sec (overhead ArrayDeque)
-  - Escenarios: ventana llena, eviction gradual
-
-- [ ] **SlidingWindowCounter Benchmark**
-  - Target: > 2M ops/sec
-  - Escenarios: mismo bucket, bucket rolling
-
-#### Análisis de Performance
-- [ ] Warmup adecuado para JIT
-- [ ] Múltiples escenarios: hot keys, cold keys, distribución uniforme
-- [ ] Identificar hotspots con profiler
-- [ ] Comparación directa entre algoritmos
-
-#### Entregables
-- [ ] Reporte de benchmarks (ops/sec por algoritmo)
-- [ ] Gráficas comparativas
-- [ ] Recomendaciones de uso por escenario
-
-### Comando Esperado
-```bash
-bazel run //java/benchmarks:algorithm_benchmarks
-```
+Esta fase se salta para acelerar el camino hacia Go, que es el objetivo principal del aprendizaje
 
 ---
 
@@ -411,17 +389,21 @@ bazel run //benchmarks:compare_all
 
 ## 🎯 Próximos Pasos Recomendados
 
-### Inmediato (Fase 3)
-1. Agregar JMH al MODULE.bazel
-2. Crear estructura `java/benchmarks/`
-3. Implementar benchmark de TokenBucket
-4. Medir throughput y comparar con targets
+### Inmediato (Fase 4 - Java Engine) ← SIGUIENTE
 
-### Por Qué Fase 3 Primero
-- Validar performance **antes** de construir engine
-- Detectar problemas de diseño temprano
-- Tomar decisiones informadas sobre algoritmo default
-- Identificar optimizaciones críticas
+**Fase 3 SKIPPED** - Ir directo a engine
+
+1. Crear estructura `java/engine/`
+2. Implementar `RateLimiterEngine` con `ConcurrentHashMap`
+3. Decidir: `ReentrantLock` vs `synchronized` por key
+4. Implementar LRU simple para eviction
+5. Tests de concurrencia con `CountDownLatch`
+
+### Por Qué Fase 4 Directamente
+- Tener sistema funcional end-to-end permite explorar más rápido
+- Engine es necesario para Fase 5 (gRPC)
+- Benchmarks (Fase 8) serán más valiosos con implementaciones completas Java + Go
+- Saltar Fase 3 acelera camino hacia Go (objetivo principal)
 
 ### Estructura de Carpetas Esperada
 ```

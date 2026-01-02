@@ -53,7 +53,7 @@ Este proyecto está específicamente diseñado para:
 | **In-memory state** | Fase 4 | ConcurrentHashMap, estructura de datos thread-safe |
 | **RPC y serialización** | Fase 5 | gRPC, Protobuf, codegen con Bazel |
 | **Polyglot systems** | Fase 6 | Java + Go con mismo contrato proto |
-| **Performance engineering** | Fases 3, 8 | JMH (Java), testing/benchmark (Go), load testing |
+| **Performance engineering** | Fase 8 | testing/benchmark (Go), load testing, comparación Java vs Go |
 | **Sistemas distribuidos** | Futuro | Partitioning, replicación, consistencia eventual |
 | **Observability** | Futuro | Métricas, tracing, debugging bajo carga |
 
@@ -290,33 +290,25 @@ Algoritmos implementados:
 * ✅ Regresión temporal con reloj mockeado (ManualClock)
 * ✅ Configuración de JUnit 5 con Bazel
 
-### Fase 3 — Performance Testing en Java ⏳
+### Fase 3 — Performance Testing en Java ⏭️
 
-**Estado: PENDIENTE**
+**Estado: SKIPPED** (Se hará en Go - Fase 8)
 
-Tests de performance para validar los algoritmos core bajo condiciones de alto throughput **antes** de construir el engine completo:
+**Justificación del skip:**
+- El objetivo principal del proyecto es profundizar en Go, no Java
+- Los benchmarks serán más valiosos en la Fase 8 cuando se pueda comparar Java vs Go
+- Implementar el engine primero permite testear performance end-to-end, no solo algoritmos aislados
+- JMH añadiría complejidad innecesaria si el foco es Go
 
-**Objetivos de testing:**
-* ⏳ Validar throughput de algoritmos (operaciones/segundo)
-* ⏳ Medir overhead de cada algoritmo (Token Bucket vs Sliding Window)
-* ⏳ Identificar hotspots con JProfiler o async-profiler
-* ⏳ Tests de stress: comportamiento bajo carga sostenida
+**Nota:** Performance testing se realizará comprehensivamente en **Fase 8** con:
+- Benchmarks en Go (`testing/benchmark`)
+- Comparación directa Java vs Go
+- Load testing end-to-end con herramienta propia
+- Métricas más realistas en contexto de engine completo
 
-**Herramientas:**
-* ⏳ JMH (Java Microbenchmark Harness) para benchmarks precisos
-* ⏳ Warmup adecuado para JIT compilation
-* ⏳ Múltiples escenarios: hot keys, cold keys, distribución uniforme
-* ⏳ Comparación entre algoritmos con misma carga
+---
 
-**Métricas objetivo:**
-* ⏳ Token Bucket: > 5M ops/sec (single-threaded)
-* ⏳ Fixed Window: > 10M ops/sec (single-threaded)
-* ⏳ Sliding Window Log: > 500K ops/sec (por overhead de ArrayDeque)
-* ⏳ Sliding Window Counter: > 2M ops/sec
-
-**Valor para entrevistas**: Demuestra capacidad de hacer performance engineering sistemático y razonar sobre trade-offs de algoritmos con datos reales.
-
-### Fase 4 — Java Engine (Concurrencia y Alto Throughput) ⏳
+### Fase 4 — Java Engine (Concurrencia y Alto Throughput) ⏳ ← **SIGUIENTE FASE**
 
 **Estado: PENDIENTE**
 
@@ -450,9 +442,9 @@ Implementación del rate limiter en Go, compartiendo el mismo contrato proto per
 
 Benchmarking sistemático de todas las implementaciones para validar decisiones de diseño:
 
-**Benchmarks de algoritmos:**
-* ⏳ JMH en Java (ya hecho en Fase 3, aquí se extiende)
-* ⏳ `testing/benchmark` en Go
+**Benchmarks de algoritmos (en ambos lenguajes):**
+* ⏳ `testing/benchmark` en Go (principal foco)
+* ⏳ Benchmarks de algoritmos Java (básicos para comparación)
 * ⏳ Comparación directa: mismo escenario, ambos lenguajes
 
 **Benchmarks de engines:**
@@ -498,15 +490,17 @@ El proyecto ha completado exitosamente las bases fundamentales:
 bazel test //core/algorithms/...  # ✅ 4/4 tests passing
 ```
 
-### ⏳ Siguiente Fase Recomendada: Performance Testing en Java (Fase 3)
+### ⏳ Siguiente Fase Recomendada: Java Engine (Fase 4)
 
-Para continuar el proyecto, el siguiente paso lógico es implementar:
-- Benchmarks con JMH para validar throughput de algoritmos core
-- Tests de stress para identificar hotspots
-- Comparación entre algoritmos (Token Bucket vs Sliding Window)
-- Métricas objetivo: > 5M ops/sec para Token Bucket
+**Fase 3 SKIPPED** - Benchmarks se harán comprehensivamente en Fase 8 con Go.
 
-**Justificación**: Validar performance de algoritmos **antes** de construir el engine permite tomar decisiones informadas sobre qué algoritmo usar por defecto y detectar problemas de diseño temprano.
+Para continuar el proyecto, el siguiente paso es implementar:
+- Java Engine con ConcurrentHashMap para almacenamiento multi-key
+- Thread-safety con ReentrantLock o synchronized
+- Eviction policy (LRU simple) para limitar memoria
+- Tests de concurrencia con CountDownLatch y múltiples threads
+
+**Justificación**: Construir el engine permite tener un sistema funcional end-to-end. Los benchmarks serán más valiosos cuando se puedan comparar implementaciones completas Java vs Go, no solo algoritmos aislados.
 
 ---
 
