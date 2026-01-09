@@ -1,0 +1,17 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_binary", "java_test")
+
+# gRPC service implementation library
+java_library(
+    name = "grpc_service",
+    srcs = ["RateLimitServiceImpl.java"],
+    deps = [
+        "//proto:ratelimit_java_proto",
+        "//proto:ratelimit_java_grpc",
+        "//java/engine:engine",
+        "//core/model:model",
+        "@maven//:io_grpc_grpc_stub",
+        "@maven//:io_grpc_grpc_protobuf",
+        "@maven//:io_grpc_grpc_api",
+    ],
+    visibility = ["//java:__subpackages__"],
+)
