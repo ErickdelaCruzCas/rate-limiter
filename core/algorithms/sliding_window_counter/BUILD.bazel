@@ -4,7 +4,10 @@ java_library(
     name = "sliding_window_counter",
     srcs = ["SlidingWindowCounter.java"],
     deps = ["//core/clock:clock", "//core/model:model"],
-    visibility = ["//core:__subpackages__"],
+    visibility = [
+        "//core:__subpackages__",
+        "//java:__subpackages__",
+    ],
 )
 
 java_test(

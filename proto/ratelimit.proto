@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package rl.proto;
+
+option java_package = "rl.proto";
+option java_multiple_files = true;
+option java_outer_classname = "RateLimitProto";
+
+// Rate limit service for checking request quotas
+service RateLimitService {
+  // Check if a request is allowed under rate limit
+  rpc CheckRateLimit(CheckRateLimitRequest) returns (CheckRateLimitResponse);
+
+  // Health check endpoint
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Request to check rate limit for a key
+message CheckRateLimitRequest {
+  // The key to rate limit (e.g., "user:123", "api:key:abc")
+  string key = 1;
+
+  // Number of permits to acquire (must be > 0)
+  int32 permits = 2;
+}
+
+// Response indicating whether request is allowed
+message CheckRateLimitResponse {
+  // Whether the request is allowed
+  bool allowed = 1;
+
+  // Nanoseconds to wait before retrying (0 if allowed)
+  int64 retry_after_nanos = 2;
+}
+
+// Health check request (empty for now)
+message HealthCheckRequest {}
+
+// Health check response
+message HealthCheckResponse {
+  enum Status {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+
+  Status status = 1;
+}

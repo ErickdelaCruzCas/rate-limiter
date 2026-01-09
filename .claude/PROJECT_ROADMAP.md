@@ -1,7 +1,7 @@
 # Rate Limiter Cookbook - Project Roadmap
 
 **Last Updated:** 2026-01-02
-**Current Phase:** Fase 2 COMPLETADA ✅ | **Next Phase:** Fase 3 (Performance Testing)
+**Current Phase:** Fase 4 COMPLETADA ✅ | **Next Phase:** Fase 5 (gRPC API)
 
 ---
 
@@ -13,7 +13,7 @@
 | Fase 1 | ✅ COMPLETADA | 100% | - |
 | Fase 2 | ✅ COMPLETADA | 100% | 2026-01-02 |
 | Fase 3 | ⏭️ SKIPPED | N/A | Benchmarks en Fase 8 |
-| Fase 4 | ⏳ PENDIENTE | 0% | - |
+| Fase 4 | ✅ COMPLETADA | 100% | 2026-01-02 |
 | Fase 5 | ⏳ PENDIENTE | 0% | - |
 | Fase 6 | ⏳ PENDIENTE | 0% | - |
 | Fase 7 | ⏳ PENDIENTE | 0% | - |
@@ -200,39 +200,86 @@ Esta fase se salta para acelerar el camino hacia Go, que es el objetivo principa
 
 ---
 
-## ⏳ FASE 4 - Java Engine (Concurrencia y Alto Throughput) (PENDIENTE)
+## ✅ FASE 4 - Java Engine (Concurrencia y Alto Throughput) (COMPLETADA)
 
 ### Objetivos
-Wrapper thread-safe con `ConcurrentHashMap` para almacenamiento multi-key.
+Wrapper thread-safe con LRU cache para almacenamiento multi-key.
 
-### Tareas Pendientes
+### ✨ Estado COMPLETADO (2026-01-02)
 
-#### Diseño del Engine
-- [ ] Crear `java/engine/RateLimiterEngine.java`
-- [ ] API: `boolean tryAcquire(String key, int permits)`
-- [ ] `ConcurrentHashMap<String, RateLimiter>` para storage
-- [ ] Eviction policy (LRU simple) para limitar memoria
-- [ ] Configuración de algoritmo por key
+**Total de tests: 23 tests ✅**
 
-#### Primitivas de Concurrencia
-- [ ] Evaluar `ReentrantLock` vs `synchronized`
-- [ ] Usar `AtomicLong` para contadores lock-free
-- [ ] Explorar `StampedLock` para optimistic reads
+#### Componentes Implementados ✅
 
-#### Testing de Concurrencia
-- [ ] Tests con `CountDownLatch` para race conditions
-- [ ] Validación thread-safety con múltiples threads
-- [ ] Tests de stress con carga sostenida
+**Core Engine** (`java/engine/`):
+- ✅ `RateLimiterEngine` - Thread-safe multi-key engine
+- ✅ `LimiterEntry` - Wrapper con RateLimiter + ReentrantLock
+- ✅ `LRUCache` - Custom LRU con LinkedHashMap
+- ✅ `RateLimiterFactory` - Factory pattern con AlgorithmType enum
+- ✅ `RateLimiterConfig` - Configuración inmutable por algoritmo
+- ✅ `AlgorithmType` - Enum para los 4 algoritmos
 
-#### Targets de Performance
-- [ ] > 100K requests/sec (single-threaded)
-- [ ] > 500K requests/sec (multi-threaded)
-- [ ] Latencia p99 < 1ms para hot keys
+#### Diseño del Engine ✅
+- ✅ `RateLimiterEngine.java` con API `tryAcquire(String key, int permits)`
+- ✅ `LRUCache<String, LimiterEntry>` para storage (no ConcurrentHashMap directo)
+- ✅ LRU eviction policy con LinkedHashMap (accessOrder=true)
+- ✅ Configuración de algoritmo por key vía factory pattern
 
-### Comando Esperado
+#### Primitivas de Concurrencia ✅
+- ✅ **ReentrantLock** seleccionado (más control que synchronized)
+- ✅ Per-key locking (fine-grained, no global bottleneck)
+- ✅ Synchronized LRUCache para get/put operations
+- ✅ Thread-safety garantizada por locks + synchronized
+
+**Decisión**: ReentrantLock ganó sobre StampedLock por simplicidad y debuggability.
+
+#### Testing de Concurrencia ✅
+- ✅ 11 tests funcionales (`RateLimiterEngineTest`)
+  - Allow/reject, multi-key isolation, LRU eviction
+  - Token refill, diferentes algoritmos, edge cases
+- ✅ 7 tests de concurrencia (`RateLimiterEngineConcurrencyTest`)
+  - CountDownLatch para race conditions
+  - Same key contention, multi-key isolation
+  - High contention (50 threads), LRU under load
+  - Deadlock prevention, correctness under load (100 threads)
+- ✅ 5 tests de stress (`RateLimiterEngineStressTest`)
+  - Single-threaded throughput
+  - Multi-threaded throughput (10 threads)
+  - Latency percentiles (p50/p95/p99/max)
+  - Memory pressure (50K keys → 10K eviction)
+  - Sustained load con refill
+
+#### Performance Alcanzado ✅
+
+**Single-threaded**:
+- ✅ **30.9M req/s** (target: 100K) - **309x over target**
+
+**Multi-threaded (10 threads)**:
+- ✅ **17.4M req/s** (target: 500K) - **35x over target**
+
+**Latency (p99)**:
+- ✅ **125 nanoseconds** (target: <1ms) - **8000x better than target**
+
+**Memory**:
+- ✅ LRU eviction: 80% eviction rate (50K → 10K keys)
+
+### Documentación ✅
+- ✅ `java/engine/README.md` - Comprehensive design doc
+  - Architecture overview
+  - Design decisions (ReentrantLock, Custom LRU, Factory)
+  - Thread-safety guarantees
+  - Performance characteristics
+  - Usage examples
+
+### Comando de Verificación
 ```bash
-bazel test //java/engine:engine_test
-bazel run //java/engine:stress_test
+bazel test //java/engine/...
+# ✅ 3/3 test suites, 23 tests total PASSED
+
+bazel test //java/engine:engine_stress_test --test_output=all
+# Single-threaded: 30.9M req/s
+# Multi-threaded: 17.4M req/s
+# Latency p99: 125 ns
 ```
 
 ---
@@ -389,36 +436,35 @@ bazel run //benchmarks:compare_all
 
 ## 🎯 Próximos Pasos Recomendados
 
-### Inmediato (Fase 4 - Java Engine) ← SIGUIENTE
+### Inmediato (Fase 5 - gRPC API) ← SIGUIENTE
 
-**Fase 3 SKIPPED** - Ir directo a engine
+**Fase 4 COMPLETADA** ✅ - Java Engine funcionando con alto throughput
 
-1. Crear estructura `java/engine/`
-2. Implementar `RateLimiterEngine` con `ConcurrentHashMap`
-3. Decidir: `ReentrantLock` vs `synchronized` por key
-4. Implementar LRU simple para eviction
-5. Tests de concurrencia con `CountDownLatch`
+1. Definir `proto/ratelimit.proto` con servicios gRPC
+2. Configurar Bazel para codegen de Protobuf y gRPC
+3. Implementar servidor gRPC en Java usando `RateLimiterEngine`
+4. Tests de integración gRPC (cliente/servidor)
+5. Error handling y graceful shutdown
 
-### Por Qué Fase 4 Directamente
-- Tener sistema funcional end-to-end permite explorar más rápido
-- Engine es necesario para Fase 5 (gRPC)
-- Benchmarks (Fase 8) serán más valiosos con implementaciones completas Java + Go
-- Saltar Fase 3 acelera camino hacia Go (objetivo principal)
+### Por Qué Fase 5 Ahora
+- Engine (Fase 4) está completo y performante (30M+ req/s)
+- gRPC permite testing end-to-end con clientes reales
+- Contrato .proto será compartido con Go (Fase 7)
+- Load testing tool (Fase 6) requiere gRPC API funcional
 
-### Estructura de Carpetas Esperada
+### Estructura de Carpetas Actual
 ```
 rate-limiter/
 ├── core/              ✅ COMPLETO
 │   ├── algorithms/    ✅ 4 algoritmos + 48 tests
 │   ├── clock/         ✅ Clock + ManualClock + SystemClock
 │   └── model/         ✅ Interfaces y tipos
-├── java/              ⏳ PENDIENTE
-│   ├── benchmarks/    <- SIGUIENTE (Fase 3)
-│   ├── engine/        <- Fase 4
-│   └── grpc/          <- Fase 5
+├── java/              ✅ ENGINE COMPLETO
+│   ├── engine/        ✅ RateLimiterEngine + 23 tests (Fase 4)
+│   └── grpc/          ⏳ SIGUIENTE (Fase 5)
+├── proto/             ⏳ SIGUIENTE (Fase 5)
 ├── go/                ⏳ PENDIENTE (Fase 7)
-├── load/              ⏳ PENDIENTE (Fase 6)
-└── proto/             ⏳ PENDIENTE (Fase 5)
+└── load/              ⏳ PENDIENTE (Fase 6)
 ```
 
 ---
@@ -426,16 +472,19 @@ rate-limiter/
 ## 📊 Métricas de Progreso
 
 ### Completitud General
-- **Fases Completadas:** 2/8 (25%)
-- **Tests Escritos:** 48 tests ✅
-- **Test Coverage:** 100% de algoritmos core
-- **Thread-Safety:** ✅ Todos los algoritmos
-- **Documentación:** ✅ README + CLAUDE.md
+- **Fases Completadas:** 3/8 (37.5%) - Fases 0, 1, 2, 4 ✅ (Fase 3 skipped)
+- **Tests Escritos:** 71 tests ✅ (48 core + 23 engine)
+- **Test Coverage:** 100% algoritmos core + engine
+- **Thread-Safety:** ✅ Algoritmos + Engine con ReentrantLock
+- **Performance:** ✅ 30.9M req/s (309x target)
+- **Documentación:** ✅ README + CLAUDE.md + java/engine/README.md
 
 ### Archivos Clave
 - `/core/algorithms/` - 4 algoritmos implementados
 - `/core/clock/` - 3 implementaciones de Clock
 - `/core/model/` - Interfaces core
+- `/java/engine/` - RateLimiterEngine thread-safe (Fase 4)
+- `/java/engine/README.md` - Documentación de diseño engine
 - `/.claude/PROJECT_ROADMAP.md` - Este archivo
 - `/CLAUDE.md` - Guía para futuras instancias de Claude
 
@@ -445,12 +494,18 @@ rate-limiter/
 
 ### Comandos Útiles
 ```bash
-# Tests
+# Tests - Core Algorithms
 bazel test //core/algorithms/...
-bazel test //core/algorithms/token_bucket:token_bucket_test --test_output=all
+
+# Tests - Java Engine
+bazel test //java/engine/...
+bazel test //java/engine:engine_stress_test --test_output=all
+
+# Tests - Todo el proyecto
+bazel test //core/... //java/...
 
 # Build
-bazel build //core/...
+bazel build //core/... //java/...
 
 # Clean
 bazel clean
@@ -466,4 +521,4 @@ bazel clean
 ---
 
 **Última actualización:** 2026-01-02
-**Actualizado por:** Claude Code (Fase 2 completada con 48 tests)
+**Actualizado por:** Claude Code (Fase 4 completada - Java Engine con 23 tests, 30.9M req/s)

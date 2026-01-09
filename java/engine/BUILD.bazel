@@ -1,0 +1,82 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_test")
+
+# Core engine library
+java_library(
+    name = "engine",
+    srcs = [
+        "AlgorithmType.java",
+        "RateLimiterConfig.java",
+        "RateLimiterFactory.java",
+        "LRUCache.java",
+        "LimiterEntry.java",
+        "RateLimiterEngine.java",
+    ],
+    deps = [
+        "//core/clock:clock",
+        "//core/model:model",
+        "//core/algorithms/token_bucket:token_bucket",
+        "//core/algorithms/fixed_window:fixed_window",
+        "//core/algorithms/sliding_window:sliding_window_log",
+        "//core/algorithms/sliding_window_counter:sliding_window_counter",
+    ],
+    visibility = ["//java:__subpackages__"],
+)
+
+# Core functional tests
+java_test(
+    name = "engine_test",
+    srcs = ["RateLimiterEngineTest.java"],
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.java.engine.RateLimiterEngineTest"],
+    deps = [
+        ":engine",
+        "//core/clock:clock",
+        "//core/model:model",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
+    ],
+)
+
+# Concurrency tests with CountDownLatch
+java_test(
+    name = "engine_concurrency_test",
+    srcs = ["RateLimiterEngineConcurrencyTest.java"],
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.java.engine.RateLimiterEngineConcurrencyTest"],
+    deps = [
+        ":engine",
+        "//core/clock:clock",
+        "//core/model:model",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
+    ],
+)
+
+# Stress and performance tests
+java_test(
+    name = "engine_stress_test",
+    srcs = ["RateLimiterEngineStressTest.java"],
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.java.engine.RateLimiterEngineStressTest"],
+    # Longer timeout for stress tests
+    timeout = "long",
+    deps = [
+        ":engine",
+        "//core/clock:clock",
+        "//core/model:model",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
+    ],
+)

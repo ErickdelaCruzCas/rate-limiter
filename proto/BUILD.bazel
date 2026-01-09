@@ -1,1 +1,24 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
+load("@grpc-java//:java_grpc_library.bzl", "java_grpc_library")
+
 package(default_visibility = ["//visibility:public"])
+
+# Proto source files
+proto_library(
+    name = "ratelimit_proto",
+    srcs = ["ratelimit.proto"],
+)
+
+# Java protobuf library (messages only)
+java_proto_library(
+    name = "ratelimit_java_proto",
+    deps = [":ratelimit_proto"],
+)
+
+# Java gRPC library (service stubs)
+java_grpc_library(
+    name = "ratelimit_java_grpc",
+    srcs = [":ratelimit_proto"],
+    deps = [":ratelimit_java_proto"],
+)
