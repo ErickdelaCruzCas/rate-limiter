@@ -58,3 +58,31 @@ java_test(
         "@maven//:org_junit_platform_junit_platform_reporting",
     ],
 )
+
+# Stress and performance tests
+java_test(
+    name = "grpc_stress_test",
+    srcs = ["RateLimitServiceStressTest.java"],
+    use_testrunner = False,
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    args = ["--select-class=rl.java.grpc.RateLimitServiceStressTest"],
+    timeout = "long",
+    deps = [
+        ":grpc_service",
+        "//proto:ratelimit_java_proto",
+        "//proto:ratelimit_java_grpc",
+        "//java/engine:engine",
+        "//core/clock:clock",
+        "//core/model:model",
+        "@maven//:io_grpc_grpc_stub",
+        "@maven//:io_grpc_grpc_protobuf",
+        "@maven//:io_grpc_grpc_api",
+        "@maven//:io_grpc_grpc_testing",
+        "@grpc-java//inprocess",
+        "@maven//:org_junit_jupiter_junit_jupiter_api",
+        "@maven//:org_junit_jupiter_junit_jupiter_engine",
+        "@maven//:org_junit_platform_junit_platform_launcher",
+        "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_reporting",
+    ],
+)
