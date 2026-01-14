@@ -122,9 +122,13 @@ public final class RateLimiterEngine {
     /**
      * Retrieves or creates a limiter entry for a key.
      *
-     * This method uses double-checked locking pattern:
-     * 1. Check if entry exists (fast path, no lock)
-     * 2. If not, create new entry (synchronized via LRUCache)
+     * This method uses putIfAbsent semantics to prevent race conditions:
+     * 1. Check if entry exists (fast path)
+     * 2. If not, atomically insert new entry (synchronized via LRUCache.putIfAbsent)
+     *
+     * Thread-safety: The putIfAbsent operation is atomic, ensuring that only one
+     * LimiterEntry is created per key, preventing the race condition where multiple
+     * threads could create different lock instances for the same key.
      *
      * @param key The key
      * @return LimiterEntry for the key (never null)
@@ -136,21 +140,16 @@ public final class RateLimiterEngine {
             return entry;
         }
 
-        // Slow path: create new limiter
-        // Note: LRUCache.put is synchronized, so this is thread-safe
-        // Multiple threads may create limiters concurrently, but only one will win
+        // Slow path: create new limiter and insert atomically
         LimiterEntry newEntry = new LimiterEntry(
             RateLimiterFactory.create(clock, defaultConfig)
         );
 
-        // putIfAbsent semantics: return existing if present, otherwise insert new
-        LimiterEntry existing = limiters.get(key);
-        if (existing != null) {
-            return existing; // Another thread created it first
-        }
+        // Atomic putIfAbsent: returns existing if present, or null if inserted
+        LimiterEntry existing = limiters.putIfAbsent(key, newEntry);
 
-        limiters.put(key, newEntry);
-        return newEntry;
+        // Return existing entry if another thread created it first, otherwise return new entry
+        return (existing != null) ? existing : newEntry;
     }
 
     /**

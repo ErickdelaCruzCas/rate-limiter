@@ -123,6 +123,23 @@ public final class LRUCache<K, V> {
     }
 
     /**
+     * Inserts a value only if the key is not already present.
+     * This is an atomic operation that prevents race conditions.
+     *
+     * @param key The key
+     * @param value The value
+     * @return The existing value if present, or null if the new value was inserted
+     */
+    public synchronized V putIfAbsent(K key, V value) {
+        V existing = map.get(key);
+        if (existing != null) {
+            return existing;  // Key already exists, return existing value
+        }
+        map.put(key, value);  // Key doesn't exist, insert new value
+        return null;
+    }
+
+    /**
      * Clears all entries from the cache.
      * Note: Does NOT invoke eviction callbacks.
      */
