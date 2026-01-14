@@ -1,0 +1,18 @@
+directories:
+  .
+
+targets:
+  //core/...
+  //java/...
+  //proto/...
+
+derive_targets_from_directories: true
+
+java_language_level: 21
+
+additional_languages:
+  java
+
+test_sources:
+  core/*/test/*
+  java/*/test/*
