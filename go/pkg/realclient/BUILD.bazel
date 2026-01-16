@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "realclient",
+    srcs = ["client.go"],
+    importpath = "github.com/ratelimiter/go/pkg/realclient",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/targets",
+        "//proto:ratelimit_go_proto",
+        "@org_golang_google_grpc//:grpc",
+        "@org_golang_google_grpc//credentials/insecure",
+    ],
+)
+
+go_test(
+    name = "realclient_test",
+    srcs = ["client_test.go"],
+    embed = [":realclient"],
+    deps = [
+        "//go/pkg/targets",
+        "//proto:ratelimit_go_proto",
+    ],
+)

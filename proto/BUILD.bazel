@@ -1,6 +1,7 @@
-load("@rules_proto//proto:defs.bzl", "proto_library")
-load("@rules_java//java:defs.bzl", "java_proto_library")
 load("@grpc-java//:java_grpc_library.bzl", "java_grpc_library")
+load("@rules_go//proto:def.bzl", "go_proto_library")
+load("@rules_java//java:defs.bzl", "java_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,4 +22,12 @@ java_grpc_library(
     name = "ratelimit_java_grpc",
     srcs = [":ratelimit_proto"],
     deps = [":ratelimit_java_proto"],
+)
+
+# Go protobuf + gRPC library
+go_proto_library(
+    name = "ratelimit_go_proto",
+    compilers = ["@rules_go//proto:go_grpc"],
+    importpath = "github.com/ratelimiter/go/api/ratelimit/v1",
+    proto = ":ratelimit_proto",
 )

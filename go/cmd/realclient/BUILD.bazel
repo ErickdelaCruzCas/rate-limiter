@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "realclient",
+    srcs = ["main.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/patterns",
+        "//go/pkg/realclient",
+        "//go/pkg/targets",
+    ],
+)

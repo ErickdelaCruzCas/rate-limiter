@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Fixed Window algorithm library
+go_library(
+    name = "fixedwindow",
+    srcs = ["fixedwindow.go"],
+    importpath = "github.com/ratelimiter/go/pkg/algorithm/fixedwindow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)
+
+# Fixed Window tests
+go_test(
+    name = "fixedwindow_test",
+    srcs = ["fixedwindow_test.go"],
+    deps = [
+        ":fixedwindow",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)

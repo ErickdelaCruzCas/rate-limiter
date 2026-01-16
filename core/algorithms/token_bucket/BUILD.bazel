@@ -3,30 +3,30 @@ load("@rules_java//java:defs.bzl", "java_library", "java_test")
 java_library(
     name = "token_bucket",
     srcs = ["TokenBucket.java"],
-    deps = [
-        "//core/clock:clock",
-        "//core/model:model",
-    ],
     visibility = [
         "//core:__subpackages__",
         "//java:__subpackages__",
+    ],
+    deps = [
+        "//core/clock",
+        "//core/model",
     ],
 )
 
 java_test(
     name = "token_bucket_test",
     srcs = ["TokenBucketTest.java"],
-    use_testrunner = False,
-    main_class = "org.junit.platform.console.ConsoleLauncher",
     args = ["--select-class=rl.core.algorithms.token_bucket.TokenBucketTest"],
+    main_class = "org.junit.platform.console.ConsoleLauncher",
+    use_testrunner = False,
     deps = [
         ":token_bucket",
-        "//core/clock:clock",
-        "//core/model:model",
+        "//core/clock",
+        "//core/model",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
         "@maven//:org_junit_jupiter_junit_jupiter_engine",
-        "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_console",
+        "@maven//:org_junit_platform_junit_platform_launcher",
         "@maven//:org_junit_platform_junit_platform_reporting",
     ],
 )

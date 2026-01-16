@@ -1,0 +1,34 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "engine",
+    srcs = [
+        "config.go",
+        "engine.go",
+        "factory.go",
+        "lru.go",
+    ],
+    importpath = "github.com/ratelimiter/go/pkg/engine",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/algorithm/fixedwindow",
+        "//go/pkg/algorithm/slidingwindow",
+        "//go/pkg/algorithm/slidingwindowcounter",
+        "//go/pkg/algorithm/tokenbucket",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)
+
+go_test(
+    name = "engine_test",
+    srcs = [
+        "engine_test.go",
+        "lru_test.go",
+    ],
+    deps = [
+        ":engine",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)

@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Token Bucket algorithm library
+go_library(
+    name = "tokenbucket",
+    srcs = ["tokenbucket.go"],
+    importpath = "github.com/ratelimiter/go/pkg/algorithm/tokenbucket",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)
+
+# Token Bucket tests
+go_test(
+    name = "tokenbucket_test",
+    srcs = ["tokenbucket_test.go"],
+    deps = [
+        ":tokenbucket",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)

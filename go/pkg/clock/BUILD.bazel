@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Clock abstraction library
+go_library(
+    name = "clock",
+    srcs = [
+        "clock.go",
+        "manual_clock.go",
+    ],
+    importpath = "github.com/ratelimiter/go/pkg/clock",
+    visibility = ["//visibility:public"],
+)
+
+# Clock tests
+go_test(
+    name = "clock_test",
+    srcs = ["clock_test.go"],
+    deps = [":clock"],
+)

@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Sliding Window Log algorithm library
+go_library(
+    name = "slidingwindow",
+    srcs = ["slidingwindowlog.go"],
+    importpath = "github.com/ratelimiter/go/pkg/algorithm/slidingwindow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)
+
+# Sliding Window Log tests
+go_test(
+    name = "slidingwindow_test",
+    srcs = ["slidingwindowlog_test.go"],
+    deps = [
+        ":slidingwindow",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)

@@ -1,0 +1,25 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "patterns",
+    srcs = [
+        "worker_pool.go",
+        "pipeline.go",
+    ],
+    importpath = "github.com/ratelimiter/go/pkg/patterns",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/realclient",
+        "//go/pkg/targets",
+    ],
+)
+
+go_test(
+    name = "patterns_test",
+    srcs = ["patterns_test.go"],
+    embed = [":patterns"],
+    deps = [
+        "//go/pkg/realclient",
+        "//go/pkg/targets",
+    ],
+)

@@ -1,0 +1,15 @@
+load("@gazelle//:def.bzl", "gazelle")
+
+# gazelle:prefix github.com/ratelimiter/go
+gazelle(name = "gazelle")
+
+# Update all Go BUILD files recursively
+gazelle(
+    name = "gazelle-update-repos",
+    args = [
+        "-from_file=go.mod",
+        "-to_macro=go_dependencies.bzl%go_repositories",
+        "-prune",
+    ],
+    command = "update-repos",
+)

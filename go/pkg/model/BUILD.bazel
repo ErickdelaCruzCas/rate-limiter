@@ -1,0 +1,19 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Model layer library (interfaces and types)
+go_library(
+    name = "model",
+    srcs = [
+        "ratelimiter.go",
+        "result.go",
+    ],
+    importpath = "github.com/ratelimiter/go/pkg/model",
+    visibility = ["//visibility:public"],
+)
+
+# Model tests
+go_test(
+    name = "model_test",
+    srcs = ["model_test.go"],
+    deps = [":model"],
+)

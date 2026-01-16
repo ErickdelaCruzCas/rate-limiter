@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "targets",
+    srcs = ["targets.go"],
+    importpath = "github.com/ratelimiter/go/pkg/targets",
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "targets_test",
+    srcs = ["targets_test.go"],
+    embed = [":targets"],
+)

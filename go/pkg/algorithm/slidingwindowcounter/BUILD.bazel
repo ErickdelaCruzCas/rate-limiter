@@ -1,0 +1,24 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+# Sliding Window Counter algorithm library
+go_library(
+    name = "slidingwindowcounter",
+    srcs = ["slidingwindowcounter.go"],
+    importpath = "github.com/ratelimiter/go/pkg/algorithm/slidingwindowcounter",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)
+
+# Sliding Window Counter tests
+go_test(
+    name = "slidingwindowcounter_test",
+    srcs = ["slidingwindowcounter_test.go"],
+    deps = [
+        ":slidingwindowcounter",
+        "//go/pkg/clock",
+        "//go/pkg/model",
+    ],
+)

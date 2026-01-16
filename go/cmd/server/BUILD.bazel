@@ -1,0 +1,14 @@
+load("@rules_go//go:def.bzl", "go_binary")
+
+go_binary(
+    name = "server",
+    srcs = ["main.go"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//go/pkg/clock",
+        "//go/pkg/engine",
+        "//go/pkg/grpcserver",
+        "//proto:ratelimit_go_proto",
+        "@org_golang_google_grpc//:grpc",
+    ],
+)
