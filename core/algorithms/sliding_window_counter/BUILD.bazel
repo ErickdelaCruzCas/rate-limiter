@@ -6,6 +6,7 @@ java_library(
     visibility = [
         "//core:__subpackages__",
         "//java:__subpackages__",
+        "//benchmarks:__subpackages__",
     ],
     deps = [
         "//core/clock",

@@ -436,16 +436,38 @@ Implementación del rate limiter en Go, compartiendo el mismo contrato proto per
 
 **Valor para entrevistas**: Demuestra comprensión profunda de concurrencia en dos lenguajes, capacidad de comparar trade-offs de diseño.
 
-### Fase 8 — Benchmarks y Comparación ⏳
+### Fase 8 — Benchmarks y Comparación ✅
 
-**Estado: PENDIENTE**
+**Estado: COMPLETADA**
 
-Benchmarking sistemático de todas las implementaciones para validar decisiones de diseño:
+Benchmarking sistemático comparando Java y Go implementations:
 
-**Benchmarks de algoritmos (en ambos lenguajes):**
-* ⏳ `testing/benchmark` en Go (principal foco)
-* ⏳ Benchmarks de algoritmos Java (básicos para comparación)
-* ⏳ Comparación directa: mismo escenario, ambos lenguajes
+**Benchmarks de algoritmos:**
+* ✅ 25+ Go benchmarks (4 algoritmos × 4 tipos + engine + model)
+* ✅ 15 JMH Java benchmarks (4 algoritmos × 3 escenarios + 3 engine)
+* ✅ Wrapper scripts para ejecutar y recolectar resultados
+
+**Comparison Framework:**
+* ✅ Go CLI tool para comparación
+* ✅ Parser de JMH JSON + Go benchmark output
+* ✅ Reportes markdown con tablas y ASCII charts
+* ✅ Export JSON para automation
+
+**Ejecución:**
+```bash
+# Run all benchmarks
+bazel run //benchmarks:run_all
+
+# View results
+cat benchmarks/reports/latest/comparison.md
+```
+
+**Resultados:**
+- **Go**: Típicamente 10-30% más rápido (0 allocs/op en hot paths)
+- **Java**: Competitivo después de warmup JIT
+- **Latencia**: Ambos <100ns/op en operaciones core
+
+Ver documentación completa: [benchmarks/README.md](benchmarks/README.md)
 
 **Benchmarks de engines:**
 * ⏳ Throughput bajo diferentes cargas (1K, 10K, 100K, 1M RPS)

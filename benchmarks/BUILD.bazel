@@ -1,0 +1,12 @@
+# Phase 8 - Benchmarks and Comparison
+
+sh_binary(
+    name = "run_all",
+    srcs = ["run_all.sh"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "compare",
+    actual = "//benchmarks/comparison:compare",
+)

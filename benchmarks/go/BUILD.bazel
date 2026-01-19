@@ -1,0 +1,5 @@
+sh_binary(
+    name = "run_benchmarks",
+    srcs = ["run_benchmarks.sh"],
+    visibility = ["//benchmarks:__pkg__"],
+)

@@ -11,7 +11,10 @@ java_library(
         "RateLimiterEngine.java",
         "RateLimiterFactory.java",
     ],
-    visibility = ["//java:__subpackages__"],
+    visibility = [
+        "//java:__subpackages__",
+        "//benchmarks:__subpackages__",
+    ],
     deps = [
         "//core/algorithms/fixed_window",
         "//core/algorithms/sliding_window:sliding_window_log",
